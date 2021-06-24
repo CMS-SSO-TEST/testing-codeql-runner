@@ -18,12 +18,23 @@ public class ComplexityCode {
         this.isValid = isValid;
     }
 
+    //////####Vulnerable Code#####//////
+    // public String hello() {
+    //     if (id == 0 && name == "dummy" && Boolean.valueOf(description) == false && isValid) {
+    //         return "it will work all fine";
+    //     } else if (id == 0 && name == "dummy" && Boolean.valueOf(description) == true && isValid) {
+    //         return "how come description is true?";
+    //     } else if (id == 0 && name == "dummy" && Boolean.valueOf(description) == false && !isValid) {
+    //         return "it has to be valid for me to work";
+    //     }
+
+    //////####Fixed Code####//////
     public String hello() {
-        if (id == 0 && name == "dummy" && Boolean.valueOf(description) == false && isValid) {
+        if (id == 0 && name.equals("dummy") && Boolean.valueOf(description) == false && isValid) {
             return "it will work all fine";
-        } else if (id == 0 && name == "dummy" && Boolean.valueOf(description) == true && isValid) {
+        } else if (id == 0 && name.equals("dummy") && Boolean.valueOf(description) == true && isValid) {
             return "how come description is true?";
-        } else if (id == 0 && name == "dummy" && Boolean.valueOf(description) == false && !isValid) {
+        } else if (id == 0 && name.equals("dummy") && Boolean.valueOf(description) == false && !isValid) {
             return "it has to be valid for me to work";
         }
 
