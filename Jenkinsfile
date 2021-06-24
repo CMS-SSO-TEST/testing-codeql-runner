@@ -39,7 +39,7 @@ spec:
       stage('codeql') {
         steps {
           container('codeql-cli'){
-            sh "codeql --verisons"
+            sh "codeql --verison"
             sh "echo env.GIT_COMMIT"
             sh "echo ${env.GIT_COMMIT}"
           }
