@@ -23,7 +23,7 @@ pipeline {
 
   stages {
 
-    stage('Git Checkout') {
+    stage('Git Checkout') { 
       steps {
           container('codeql'){
              sh"""
