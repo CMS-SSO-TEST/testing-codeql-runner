@@ -33,18 +33,18 @@ public class SQLInjectionSample {
         Connection c = getConn();
 
         //////####Vulnerable Code#####//////
-        ResultSet rs = c.createStatement().executeQuery(sql);
-        while(rs.next()) {
-            accountDTOS.add(new AccountDTO());
-        }
-
-        //////####Fixed Code#####//////
-        // try (Statement stmt = c.createStatement()) {
-        //   ResultSet rs = stmt.executeQuery(sql);
+        // ResultSet rs = c.createStatement().executeQuery(sql);
         // while(rs.next()) {
         //     accountDTOS.add(new AccountDTO());
-        //   }
         // }
+
+        //////####Fixed Code#####//////
+        try (Statement stmt = c.createStatement()) {
+          ResultSet rs = stmt.executeQuery(sql);
+        while(rs.next()) {
+            accountDTOS.add(new AccountDTO());
+          }
+        }
         return accountDTOS;
     }
 }
