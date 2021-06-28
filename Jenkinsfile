@@ -54,13 +54,32 @@ spec:
       }
     stage("Publishing CodeQL scanned results to github"){
       steps {
-        withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
-           sh "echo $GitPW | codeql  github upload-results --verbose \
-                  --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
-                  --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
-                  --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
+        container('codeql-cli'){
+            withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
+              sh "echo $GitPW | codeql  github upload-results --verbose \
+                      --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
+                      --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
+                      --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
+              }
           }
         }
-      }            
+      }
+      stage('Custom code to pass or fail the build') {
+        steps {
+          container('codeql-cli'){
+            sh '''
+                set +e
+                ls -al /tmp/
+                cat /tmp/gradle.sarif | jq -e '.runs[0].results | select(length > 0)'
+                if [ "$?" -eq 0 ]
+                then
+                echo "Vulnerabilities detected. Failing the action"
+                exit 1
+                fi
+            '''
+          }
+        }
+      }
+      
     }
 }
