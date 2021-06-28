@@ -73,13 +73,13 @@ spec:
                 cat /tmp/gradle.sarif | jq -e '.runs[0].results | select(length > 0)'
                 if [ "$?" -eq 0 ]
                 then
-                echo "Vulnerabilities detected. Failing the action"
+                echo "Security vulnerabilities/errors identified in the code. Failing the action"
                 exit 1
                 fi
             '''
           }
         }
       }
-      
+
     }
 }
