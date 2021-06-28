@@ -36,14 +36,31 @@ spec:
       //     }
       //   }
       // }
-      stage('codeql') {
+      stage('Creating CodeQL Database') {
         steps {
           container('codeql-cli'){
-            sh "codeql verison"
-            sh "echo env.GIT_COMMIT"
-            sh "echo ${env.GIT_COMMIT}"
+            //sh "codeql verison"
+            sh "codeql database create /tmp/javadb --language=java"
           }
         }
       }
+      stage('Analyzing CodeQL Database') {
+        steps {
+          container('codeql-cli'){
+            //sh "codeql verison"
+            sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
+          }
+        }
+      }
+    stage("Publishing CodeQL scanned results to github"){
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
+           sh "echo $GitPW | codeql  github upload-results --verbose \
+                  --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
+                  --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
+                  --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
+          }
+        }
+      }            
     }
 }
