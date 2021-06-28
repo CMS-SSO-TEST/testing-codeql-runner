@@ -1,4 +1,4 @@
-@Library('CISharedLibraries@rk-image-push') _
+//@Library('CISharedLibraries@rk-image-push') _
 
 // Map gitConfig=[
 //   git:[
