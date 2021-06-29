@@ -23,12 +23,14 @@ pipeline {
       stage('Creating CodeQL Database') {
         steps {
             //sh "codeql verison"
+            sh "rm -rf /tmp/javadb"
             sh "codeql database create /tmp/javadb --language=java"
         }
       }
-      stage('Analyzing CodeQL Database') {
+      stage('Analyzing CodeQL Ddf -hatabase') {
         steps {
             //sh "codeql verison"
+            sh "/tmp/gradle.sarif"
             sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
         }
       }
