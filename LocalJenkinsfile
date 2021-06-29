@@ -30,7 +30,7 @@ pipeline {
       stage('Analyzing CodeQL Ddf -hatabase') {
         steps {
             //sh "codeql verison"
-            sh "/tmp/gradle.sarif"
+            sh "rm -rf /tmp/gradle.sarif"
             sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
         }
       }
