@@ -48,7 +48,8 @@ spec:
         steps {
           container('codeql-cli'){
             //sh "codeql verison"
-            sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
+            //sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
+            sh "codeql database analyze /tmp/javadb java-security-extended.qls --format=sarif-latest --output=/tmp/gradle.sarif"
           }
         }
       }
