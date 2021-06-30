@@ -22,41 +22,46 @@ pipeline {
       // }
       stage('Creating CodeQL Database') {
         steps {
-            //sh "codeql verison"
-            sh "rm -rf /tmp/javadb"
-            sh "codeql database create /tmp/javadb --language=java"
+          script {
+                  if (env.BRANCH_NAME ==~ "PR-.*") {
+                      echo "Creating CodeQL Database for $CHANGE_BRANCH with pull request id $CHANGE_ID."
+                      sh "rm -rf /tmp/pr-javadb"
+                      sh "codeql database create /tmp/pr-javadb --language=java"
+                  } else {
+                      echo "Creating CodeQL Database ${env.BRANCH_NAME} branch."
+                      sh "rm -rf /tmp/br-javadb"
+                      sh "codeql database create /tmp/br-javadb --language=java"
+                  }
+                }
         }
       }
-      stage('Analyzing CodeQL Ddf -hatabase') {
+      stage('Analyzing CodeQL Database') {
         steps {
-            //sh "codeql verison"
-            sh "rm -rf /tmp/gradle.sarif"
-            //sh "codeql database analyze /tmp/javadb /opt/codeql/qlpacks/codeql-java/codeql-suites/*.qls --format=sarif-latest --output=/tmp/gradle.sarif"
-            sh "codeql database analyze /tmp/javadb java-security-extended.qls --format=sarif-latest --output=/tmp/gradle.sarif"
+          script {
+                  if (env.BRANCH_NAME ==~ "PR-.*") {
+                      echo "Analyzing CodeQL Database for $CHANGE_BRANCH with pull request id $CHANGE_ID."
+                      sh "rm -rf /tmp/pr-gradle.sarif"
+                      sh "codeql database analyze /tmp/pr-javadb java-security-extended.qls --format=sarif-latest --output=/tmp/pr-gradle.sarif"
+                  } else {
+                      echo "Analyzing CodeQL Database ${env.BRANCH_NAME} branch."
+                      sh "rm -rf /tmp/br-gradle.sarif"
+                      sh "codeql database analyze /tmp/br-javadb java-security-extended.qls --format=sarif-latest --output=/tmp/br-gradle.sarif"
+                  }
+                }
         }
       }
-    // stage("Publishing CodeQL scanned results to github"){
-    //   steps {
-    //         withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
-    //           sh "echo $GitPW | codeql  github upload-results --verbose \
-    //                   --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
-    //                   --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
-    //                   --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
-    //         }
-    //     }
-    //   }
       stage("Publishing CodeQL scanned results to github"){
         steps {
           script {
             withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
                   if (env.BRANCH_NAME ==~ "PR-.*") {
-                      echo "Uploading scanned results for $CHANGE_BRANCH with pull request id $CHANGE_ID"
+                      echo "Uploading scanned results for $CHANGE_BRANCH with pull request id $CHANGE_ID."
                       sh "echo $GitPW | codeql  github upload-results --verbose \
                               --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/pull/${env.CHANGE_ID}/head \
                               --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
                               --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
                   } else {
-                      echo "Uploading scanned result for ${env.BRANCH_NAME}"
+                      echo "Uploading scanned result for ${env.BRANCH_NAME} branch."
                       sh "echo $GitPW | codeql  github upload-results --verbose \
                               --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
                               --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
