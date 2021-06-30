@@ -52,7 +52,7 @@ pipeline {
                   if (env.BRANCH_NAME ==~ "PR-.*") {
                       echo "Uploading scanned results for $CHANGE_BRANCH with pull request id $CHANGE_ID"
                       sh "echo $GitPW | codeql  github upload-results --verbose \
-                              --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/pulls/${env.CHANGE_ID}/merge \
+                              --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/pull/${env.CHANGE_ID}/head \
                               --commit=${env.GIT_COMMIT} --sarif=/tmp/gradle.sarif \
                               --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
                   } else {
