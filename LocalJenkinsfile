@@ -79,7 +79,7 @@ pipeline {
                   set +e
                   ls -al /tmp/
                   cat /tmp/$SARIF_FILE | jq -e '.runs[0].results | select(length > 0)'
-                  if [ "$?" -eq 0 ]
+                  if [ "\$?" -eq 0 ]
                   then
                   echo "Security vulnerabilities/errors identified in the code. Failing the build"
                   exit 1
