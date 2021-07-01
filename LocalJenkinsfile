@@ -78,10 +78,10 @@ pipeline {
               sh """
                   set +e
                   ls -al /tmp/
-                  cat /tmp/gradle.sarif | jq -e '.runs[0].results | select(length > 0)'
+                  cat /tmp/$SARIF_FILE | jq -e '.runs[0].results | select(length > 0)'
                   if [ "$?" -eq 0 ]
                   then
-                  echo "Security vulnerabilities/errors identified in the code. Failing the action"
+                  echo "Security vulnerabilities/errors identified in the code. Failing the build"
                   exit 1
                   fi
               """
