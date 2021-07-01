@@ -73,17 +73,20 @@ pipeline {
       }
       stage('Custom code to pass or fail the build') {
         steps {
-            sh '''
-                set +e
-                ls -al /tmp/
-                cat /tmp/gradle.sarif | jq -e '.runs[0].results | select(length > 0)'
-                if [ "$?" -eq 0 ]
-                then
-                echo "Security vulnerabilities/errors identified in the code. Failing the action"
-                exit 1
-                fi
-            '''
+          script {
+            if (env.BRANCH_NAME ==~ "PR-.*") { SARIF_FILE = 'pr-gradle.sarif'; } else { SARIF_FILE = 'br-gradle.sarif'; }
+              sh """
+                  set +e
+                  ls -al /tmp/
+                  cat /tmp/gradle.sarif | jq -e '.runs[0].results | select(length > 0)'
+                  if [ "$?" -eq 0 ]
+                  then
+                  echo "Security vulnerabilities/errors identified in the code. Failing the action"
+                  exit 1
+                  fi
+              """
+          }
         }
       }
-    }
+  }
 }
