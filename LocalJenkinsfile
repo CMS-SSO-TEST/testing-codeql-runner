@@ -1,0 +1,92 @@
+//@Library('CISharedLibraries@rk-image-push') _
+
+// Map gitConfig=[
+//   git:[
+//     domain:"github.com",
+//     credentialId:"rmahimalur-github",
+//     org:"CMS-SSO-TEST",
+//     repo:"testing-codeql-runner",
+//     buildBranch: "test"
+//     ]
+// ]
+
+pipeline {
+    agent any
+    stages {
+      // stage('Git Checkout') {
+      //   steps {
+      //     container('codeql-cli'){
+      //       gitCheckout(gitConfig)
+      //     }
+      //   }
+      // }
+      stage('Creating CodeQL Database') {
+        steps {
+          script {
+                  if (env.BRANCH_NAME ==~ "PR-.*") {
+                      echo "Creating CodeQL Database for $CHANGE_BRANCH with pull request id $CHANGE_ID."
+                      sh "rm -rf /tmp/pr-javadb"
+                      sh "codeql database create /tmp/pr-javadb --language=java"
+                  } else {
+                      echo "Creating CodeQL Database ${env.BRANCH_NAME} branch."
+                      sh "rm -rf /tmp/br-javadb"
+                      sh "codeql database create /tmp/br-javadb --language=java"
+                  }
+                }
+        }
+      }
+      stage('Analyzing CodeQL Database') {
+        steps {
+          script {
+                  if (env.BRANCH_NAME ==~ "PR-.*") {
+                      echo "Analyzing CodeQL Database for $CHANGE_BRANCH with pull request id $CHANGE_ID."
+                      sh "rm -rf /tmp/pr-gradle.sarif"
+                      sh "codeql database analyze /tmp/pr-javadb java-security-extended.qls --format=sarif-latest --output=/tmp/pr-gradle.sarif"
+                  } else {
+                      echo "Analyzing CodeQL Database ${env.BRANCH_NAME} branch."
+                      sh "rm -rf /tmp/br-gradle.sarif"
+                      sh "codeql database analyze /tmp/br-javadb java-security-extended.qls --format=sarif-latest --output=/tmp/br-gradle.sarif"
+                  }
+                }
+        }
+      }
+      stage("Publishing CodeQL scanned results to github"){
+        steps {
+          script {
+            withCredentials([usernamePassword(credentialsId: 'rmahimalur-github', usernameVariable: 'GitID', passwordVariable: 'GitPW')]){
+                  if (env.BRANCH_NAME ==~ "PR-.*") {
+                      echo "Uploading scanned results for $CHANGE_BRANCH with pull request id $CHANGE_ID."
+                      sh "echo $GitPW | codeql  github upload-results --verbose \
+                              --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/pull/${env.CHANGE_ID}/head \
+                              --commit=${env.GIT_COMMIT} --sarif=/tmp/pr-gradle.sarif \
+                              --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
+                  } else {
+                      echo "Uploading scanned result for ${env.BRANCH_NAME} branch."
+                      sh "echo $GitPW | codeql  github upload-results --verbose \
+                              --repository=CMS-SSO-TEST/testing-codeql-runner --ref=refs/heads/${env.BRANCH_NAME} \
+                              --commit=${env.GIT_COMMIT} --sarif=/tmp/br-gradle.sarif \
+                              --github-auth-stdin --github-url=https://github.com/ --log-to-stderr"
+                  }
+              }
+          }
+        }
+      }
+      stage('Custom code to pass or fail the build') {
+        steps {
+          script {
+            if (env.BRANCH_NAME ==~ "PR-.*") { SARIF_FILE = 'pr-gradle.sarif'; } else { SARIF_FILE = 'br-gradle.sarif'; }
+              sh """
+                  set +e
+                  ls -al /tmp/
+                  cat /tmp/$SARIF_FILE | jq -e '.runs[0].results | select(length > 0)'
+                  if [ "\$?" -eq 0 ]
+                  then
+                  echo "Security vulnerabilities/errors identified in the code. Failing the build"
+                  exit 1
+                  fi
+              """
+          }
+        }
+      }
+  }
+}
